@@ -2,18 +2,12 @@ import socket
 import struct
 
 BROADCAST_PORT = 8888
-
 PACKET_FORMAT = 'I 3f'
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
 sock.bind(('', BROADCAST_PORT))
-
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-
-print(f"Listening for broadcast messages on port {BROADCAST_PORT}...")
 
 while True:
     data, addr = sock.recvfrom(1024)

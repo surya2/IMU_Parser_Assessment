@@ -11,25 +11,31 @@
 #include <csignal>
 #include <atomic>
 #include <memory>
+#include <iomanip>
 
 #include "imu_reader.h"
 #include "compatibility.h"
 
-std::vector<char> dataBuffer;
+std::vector<uint8_t> dataBuffer;
 struct sockaddr_in broadcastAddress;
 bool little_endian = false;
 int broadcastSocket = -1;
 int port_fd = -1;
 
 int findHeader(uint8_t *position){
-    std::cout << "data buffer size: " << static_cast<int>(dataBuffer.size())-(int)HEADER_SIZE << std::endl;
+    if(dataBuffer.size() < HEADER_SIZE){
+        return false;
+    }
+    // std::cout << "data buffer size: " << static_cast<int>(dataBuffer.size())-(int)HEADER_SIZE << std::endl;
     for(int i = 0; i<static_cast<int>(dataBuffer.size())-(int)HEADER_SIZE; i++){
-        std::cout << i << std::endl;
+        // std::cout << std::hex << std::setw(2) << std::setfill('0') 
+        //                   << static_cast<int>(dataBuffer[i]) << " ";
         if(dataBuffer[i] == HEADER1 && dataBuffer[i+1] == HEADER2 && dataBuffer[i+2] == HEADER3 && dataBuffer[i+3] == HEADER4){
             *position = i;
             return true;
         }
     }
+    // std::cout << std::dec << std::endl;
     return false;
 }
 
@@ -41,7 +47,12 @@ void processIMU_Frames(){
         memset(&stagingBuffer, 0, sizeof(stagingBuffer));
         int nBytes = read(port_fd, stagingBuffer, sizeof(stagingBuffer));
         if(nBytes > 0){
-            std::cout << "Got something" << std::endl;
+            // std::cout << "Got something" << std::endl;
+            // for(int i = 0; i < nBytes; i++) {
+            //     std::cout << std::hex << std::setw(2) << std::setfill('0') 
+            //               << static_cast<int>(stagingBuffer[i]) << " ";
+            // }
+            // std::cout << std::dec << std::endl;
             dataBuffer.insert(dataBuffer.end(), stagingBuffer, stagingBuffer+nBytes);
             if(findHeader(&position)) {
                 if ((position + PACKET_SIZE) <= dataBuffer.size()){
@@ -50,6 +61,22 @@ void processIMU_Frames(){
                     memcpy(&packet.X_GyroRate, &dataBuffer[position + 8], 4);
                     memcpy(&packet.Y_GyroRate, &dataBuffer[position + 12], 4);
                     memcpy(&packet.Z_GyroRate, &dataBuffer[position + 16], 4);
+
+                    if (little_endian) {
+                        packet.packetCount = ntohl(packet.packetCount);
+                        uint32_t temp;
+                        memcpy(&temp, &packet.X_GyroRate, 4);
+                        temp = ntohl(temp);
+                        memcpy(&packet.X_GyroRate, &temp, 4);
+                        
+                        memcpy(&temp, &packet.Y_GyroRate, 4);
+                        temp = ntohl(temp);
+                        memcpy(&packet.Y_GyroRate, &temp, 4);
+                        
+                        memcpy(&temp, &packet.Z_GyroRate, 4);
+                        temp = ntohl(temp);
+                        memcpy(&packet.Z_GyroRate, &temp, 4);
+                    }
 
                     sendto(broadcastSocket, (char *) &packet, sizeof(packet), 0,
                            (struct sockaddr *) &broadcastAddress, sizeof(broadcastAddress));
@@ -73,7 +100,7 @@ void processIMU_Frames(){
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     int test_number = 1;
     char *test_number_ptr = (char*)&test_number;
 
@@ -81,7 +108,9 @@ int main() {
         little_endian = true;
     }
 
-    port_fd = open(UART_PORT_FILE, O_RDONLY | O_NOCTTY | O_NONBLOCK);
+    const char *uart_file = (argc > 1) ? argv[1] : UART_PORT_FILE;
+
+    port_fd = open(uart_file, O_RDONLY | O_NOCTTY | O_NONBLOCK);
     if (port_fd == -1) {
         throw std::runtime_error("UART port could no be opened...");
         return -1;

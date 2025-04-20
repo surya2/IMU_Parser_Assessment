@@ -9,6 +9,7 @@
 #include <cstring>
 #include <stdexcept>
 #include "../src/imu_reader.h"
+#include <thread>
 
 #include "fake_data.h"
 
@@ -49,18 +50,10 @@ void write_to_uart(int fd, const std::vector<uint8_t>& data) {
     if (bytes_written < 0) {
         throw std::runtime_error("Error writing to UART port");
     }
-    std::cout << "Written " << bytes_written << " bytes: ";
-    for (uint8_t byte : data) {
-        std::cout << std::hex << static_cast<int>(byte) << " ";
-    }
-    std::cout << std::dec << std::endl;  // reset to decimal
 }
 
-int main() {
-    const char *uart_device = "/dev/tty1";  // Change to the appropriate UART device
-
-    // Open the UART port (read/write, non-blocking)
-    int fd = open(UART_PORT_FILE, O_RDWR | O_NOCTTY | O_NONBLOCK);
+int main(int argc, char* argv[]) {
+    int fd = open((argc > 1) ? argv[1] : UART_PORT_FILE, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd == -1) {
         std::cerr << "Error opening UART port: " << strerror(errno) << std::endl;
         return -1;
@@ -71,8 +64,10 @@ int main() {
 
         std::vector<uint8_t> packet = createFakePacket();
 
-        while(true)
+        while(true){
             write_to_uart(fd, packet);
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
 
         close(fd);
     } catch (const std::exception &e) {

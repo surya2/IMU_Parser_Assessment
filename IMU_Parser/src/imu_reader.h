@@ -26,7 +26,7 @@
 #define LOCALHOST_BROADCAST_IP "127.255.255.255"
 
 struct ParsedPacket {
-    uint32_t packetCount;
+    int packetCount;
     float X_GyroRate;
     float Y_GyroRate;
     float Z_GyroRate;

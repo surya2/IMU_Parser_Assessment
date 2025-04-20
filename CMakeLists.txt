@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.2)
 project(TrueAnomalyAssessment)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -8,7 +8,7 @@ find_package(Catch2 3 REQUIRED)
 include_directories(IMU_Parser/src)
 
 add_executable(TrueAnomalyAssessment
-        IMU_Parser/src/imu_reader.cpp
+        IMU_Parser/src/imu_reader_copy.cpp
         IMU_Parser/src/imu_reader.h)
 
 add_executable(test_imu

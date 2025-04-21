@@ -9,7 +9,7 @@
 #include <cstring>
 #include <arpa/inet.h>
 extern "C" {
-    uint8_t *createFakePacket() {
+    uint8_t *createFakePacket(uint32_t count) {
         std::vector<uint8_t> packet;
 
         packet.push_back(0x7F);
@@ -19,10 +19,6 @@ extern "C" {
 
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<int> counts(0, 100);
-
-        int count = counts(gen);
-        std::cout << "Expected Packet count: " << count << std::endl;
 
         uint32_t packetCount = htonl((uint32_t)count); // reorders bytes into big-endian according to IEEE-754 network ordering
 
@@ -32,14 +28,6 @@ extern "C" {
         }
 
         std::uniform_real_distribution<float> floats(-100.0f, 100.0f);
-
-        float x_gyro_rate = floats(gen);
-        std::cout << "Expected X Gyro Rate: " << x_gyro_rate <<std::endl;
-        float y_gyro_rate = floats(gen);
-        std::cout << "Expected Y Gyro Rate: " << y_gyro_rate <<std::endl;
-        float z_gyro_rate = floats(gen);
-        std::cout << "Expected Z Gyro Rate: " << z_gyro_rate <<std::endl;
-
 
         uint32_t x_gyro_bytes;
         memcpy(&x_gyro_bytes, &x_gyro_rate, sizeof(float));

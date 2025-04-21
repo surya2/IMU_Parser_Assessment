@@ -12,7 +12,7 @@
 #include <atomic>
 #include <memory>
 
-#include "imu_reader.h"
+#include "imu_parser.h"
 #include "compatibility.h"
 
 std::vector<char> dataBuffer;

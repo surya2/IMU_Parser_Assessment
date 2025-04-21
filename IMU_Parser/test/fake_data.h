@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cstring>
 #include <arpa/inet.h>
+#include "compatibility.h"
 
 std::vector<uint8_t> createFakePacket();
 

@@ -22,13 +22,13 @@ void processIMU_Frames(){
             inputBuffer.insert(inputBuffer.end(), stagingBuffer, stagingBuffer+nBytes);  // Add to inputBuffer; inputBuffer's job is to get all of the bytes so that findHeader() can go in and find a full packet
             auto parseResult = parsePacket(inputBuffer, &indexInBuffer, (bool)little_endian);  // call to parsePacket to get a packet
             if(parseResult.second) {
-                // broadcast message to 127.255.255.255 - all devices/processes on localhost network
+                /* broadcast message to 127.255.255.255 - all devices/processes on localhost network */
                 sendto(broadcastSocket, (char *) &(parseResult.first), sizeof(parseResult.first), 0,
                    (struct sockaddr *) &broadcastAddress, sizeof(broadcastAddress));
                 break;
             }
         } else if (nBytes < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {  // error could be that the port is being blocked by another process
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             } else {
                 std::cerr << "Read error: " << strerror(errno) << std::endl;
@@ -37,7 +37,11 @@ void processIMU_Frames(){
     }
 }
 
+/*
+ * Argument: File path of a port, ex: /dev/pts/4
+ */
 int main(int argc, char* argv[]) {
+    /* Check whether little endian machine */
     int test_number = 1;
     char *test_number_ptr = (char*)&test_number;
 
@@ -47,7 +51,7 @@ int main(int argc, char* argv[]) {
 
     const char *uart_file = (argc > 1) ? argv[1] : UART_PORT_FILE;
 
-    port_fd = open(uart_file, O_RDONLY | O_NOCTTY | O_NONBLOCK);
+    port_fd = open(uart_file, O_RDONLY | O_NOCTTY | O_NONBLOCK);  // open port to read from
     if (port_fd == -1) {
         throw std::runtime_error("UART port could no be opened...");
         return -1;
@@ -55,7 +59,7 @@ int main(int argc, char* argv[]) {
         std::cout << "just opened the port at " << port_fd << std::endl;
     }
 
-    struct termios tty_config;
+    struct termios tty_config;  // struct to create configuration parameters for reading from port_fd (the select UART/serial port to read from)
     memset(&tty_config, 0, sizeof(tty_config));
     if (tcgetattr(port_fd, &tty_config) != 0) {
         close(port_fd);

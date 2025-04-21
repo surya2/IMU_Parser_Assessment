@@ -19,37 +19,38 @@ int findHeader(std::vector<uint8_t>& dataBuffer, uint8_t *position){
     return false;
 }
 
-std::pair<ParsedPacket, bool> parsePacket(std::vector<uint8_t>& dataBuffer, uint8_t *position, bool little_endian){
-    ParsedPacket packet{};
+ParsedPacket* parsePacket(std::vector<uint8_t>& dataBuffer, uint8_t *position, bool little_endian){
+    ParsedPacket *packet = nullptr; // Get on heap
     if(findHeader(dataBuffer, position)) {
         if ((*position + PACKET_SIZE) <= dataBuffer.size()){  // if headers with packet are found (full packet size can be extracted)
+            packet = new ParsedPacket();
             // Copy data corresponding to each field of Packet count, X-axis Gyro Rate, Y-axis Gyro Rate, Z-axis Gyro Rate into ParsedPacket struct
-            memcpy(&packet.packetCount, &dataBuffer[*position + 4], 4);
-            memcpy(&packet.X_GyroRate, &dataBuffer[*position + 8], 4);
-            memcpy(&packet.Y_GyroRate, &dataBuffer[*position + 12], 4);
-            memcpy(&packet.Z_GyroRate, &dataBuffer[*position + 16], 4);
+            memcpy(&packet->packetCount, &dataBuffer[*position + 4], 4);
+            memcpy(&packet->X_GyroRate, &dataBuffer[*position + 8], 4);
+            memcpy(&packet->Y_GyroRate, &dataBuffer[*position + 12], 4);
+            memcpy(&packet->Z_GyroRate, &dataBuffer[*position + 16], 4);
 
             // If little-endian machine, use ntohl() to convert into host machine's endiannes. I also provided some code for manually doing this conversion in my README.ms
             if (little_endian) {
-                packet.packetCount = ntohl(packet.packetCount);
+                packet->packetCount = ntohl(packet->packetCount);
                 uint32_t temp;
-                memcpy(&temp, &packet.X_GyroRate, 4);
+                memcpy(&temp, &packet->X_GyroRate, 4);
                 temp = ntohl(temp);
-                memcpy(&packet.X_GyroRate, &temp, 4);
+                memcpy(&packet->X_GyroRate, &temp, 4);
 
-                memcpy(&temp, &packet.Y_GyroRate, 4);
+                memcpy(&temp, &packet->Y_GyroRate, 4);
                 temp = ntohl(temp);
-                memcpy(&packet.Y_GyroRate, &temp, 4);
+                memcpy(&packet->Y_GyroRate, &temp, 4);
 
-                memcpy(&temp, &packet.Z_GyroRate, 4);
+                memcpy(&temp, &packet->Z_GyroRate, 4);
                 temp = ntohl(temp);
-                memcpy(&packet.Z_GyroRate, &temp, 4);
+                memcpy(&packet->Z_GyroRate, &temp, 4);
             }
 
             dataBuffer.clear();  // clear because full packet has been found, now wait 80ms until the buffer is used again to recreate packets from the UART frames received
             *position = 0;
-            return {packet, true};
+            return packet;
         }
     }
-    return {packet, false};
+    return packet;
 }

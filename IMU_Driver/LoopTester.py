@@ -35,7 +35,7 @@ def main():
         elif i+1 > n:
             raise Exception("Did not give an argument for --test-mode flag")
 
-    '''To get .so library for exttrenal createFakePacket C++ function:'''
+    '''To get .so library for external createFakePacket C++ function:'''
     script_dir = os.path.dirname(os.path.abspath(__file__))
     fake_data_lib_path = os.path.join(script_dir, "fake_data.so")
 

@@ -2,12 +2,12 @@
 #### Surya Shanmugaselvam
 
 ## Quick Disclaimer
-- I tried using /dev/tty1 for my serial port. However, as it is a serial port, my operating ssytem did not allow me to have 2 internal processes both writing to and reading from /dev/tty1.
-For this reason, to simulate hardware communicating to my C++ parsing code, I used a command call `socat` to create a virtual serial port and 2 file descriptors called PTY devices to simulate a hardware connection. I had me LoopTester.py Python script open one PTY device and my C++ imu_parser code to open the other PTY device. This way, my C++ code received the UART frames my Python code was sending. I have included usage instructions below.
-- I also used WSL2 (Windows Subsystem for Linux) to run this code. My understanding is that this should run the same for other Linux machines but I am not sure if architecture differences will affect how this code is built
+- I tried using /dev/tty1 for my serial port. However, as it is a serial port, my operating system did not allow me to have 2 internal processes both writing to and reading from /dev/tty1.
+For this reason, to simulate hardware communicating to my C++ parsing code, I used a command called `socat` to create a virtual serial port and 2 file descriptors called PTY devices to simulate a hardware connection. I had my LoopTester.py Python script open one PTY device and my C++ 'imu_parser' code to open the other PTY device. This way, my C++ code received the UART frames my Python code was sending. I have included usage instructions below.
+- I also used WSL2 (Windows Subsystem for Linux) to run this code. My understanding is that this should run the same for other Linux machines, but I am not sure if architecture differences will affect how this code is built.
 
 ## Code Files of Interest
-- `IMU_Parser/src/parser_functions.cpp` - Has the parsing function which parses a bytre string from a UART serial port
+- `IMU_Parser/src/parser_functions.cpp` - Has the parsing function which parses a byte string from a UART serial port
 - `IMU_Parser/src/imu_parser.cpp` - Calls the parse functions in `parse_function.cpp`; mainly responsible for setting up file descriptor pointing to serial port, socket for broadcasting extracted packet fields, and maintaining an input buffer of bytes that are received.
 - `IMU_Parser/test/fake_data_extern.cpp` - Creates fake packets with the required header bytes, a packet count, and fake gyro rate values. Writes the packet count and fake gyro values in IEEE-754 network byte order/big-endian
 - `IMU_Parser/test/mock_imu.cpp` - Just a simply testing program that gets creates fake packets and sends it to a specified port.
@@ -21,7 +21,6 @@ Solution for Parsing function:
 - Wrote function called `parsePacket` in *IMU_Parser/src/parse_functions.cpp*
 - The function receives `uint8_t` buffer which represents the input received by the IMU device over a serial port
 - The function calls the `findHeader` function given a position to start at in the buffer. The `findHeader` function will find the first occurrence of the start header *0x7F 0xF0 0x1C 0xAF* which signifies the beginning of a UART frame
-- `findHeader` returns *true* if a packet is found in the buffer and sets the position at the start of the packet.
 - `parsePacket` then creates a `ParsedPacket` struct and copies bytes 4-7 from the new position in the buffer for the packet count, bytes 8-11 for the X-axis Gyro Rate, byte 12-15 for the Y-axis Gyro Rate, and bytes 16-19 for the X-axis Gyro Rate (indexed from 0)
 - The function returns the packet struct. Now because the struct object always has the same size regardless of whether it was written to or not, I decided to return a *std::pair* instead with the second field being a boolean signifying whether a packet was extracted
 Solution for UART reader:
@@ -98,3 +97,5 @@ From the parent directory, run `./run_test.sh`
    - Will output 2 PTY file descriptors with the format '/dev/pts/X'
 4) In another terminal inside the `build` directory, run `./imu_parser <port to open>`. The default port is '/dev/tty1' if no argument given, but for testing virtual hardware like in this scenario, it is recommended to provide and argument. Provide one of the PTY file descriptors as an argument like this: `./imu_parser /dev/pts/1`
 5) In another terminal, inside the `IMU_Driver` directory, run `python3 LoopTester.py --port <port to open>`. The default port is '/dev/ttty1', but as mentioned above, it is recommended to use the other PTY file descriptor like this: `python3 LoopTester.py --port /dev/pts/2`
+
+

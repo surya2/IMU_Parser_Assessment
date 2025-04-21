@@ -27,6 +27,6 @@ struct ParsedPacket {
 };
 
 int findHeader(std::vector<uint8_t>& dataBuffer, uint8_t *position);
-std::pair<ParsedPacket, bool> parsePacket(std::vector<uint8_t>& dataBuffer, uint8_t *position, bool little_endian);
+ParsedPacket* parsePacket(std::vector<uint8_t>& dataBuffer, uint8_t *position, bool little_endian);
 
 #endif //TRUEANOMALYASSESSMENT_PARSE_FUNCTIONS_H

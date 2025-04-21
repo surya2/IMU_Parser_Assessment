@@ -21,10 +21,11 @@ void processIMU_Frames(){
         if(nBytes > 0){
             inputBuffer.insert(inputBuffer.end(), stagingBuffer, stagingBuffer+nBytes);  // Add to inputBuffer; inputBuffer's job is to get all of the bytes so that findHeader() can go in and find a full packet
             auto parseResult = parsePacket(inputBuffer, &indexInBuffer, (bool)little_endian);  // call to parsePacket to get a packet
-            if(parseResult.second) {
+            if(parseResult) {
                 /* broadcast message to 127.255.255.255 - all devices/processes on localhost network */
-                sendto(broadcastSocket, (char *) &(parseResult.first), sizeof(parseResult.first), 0,
+                sendto(broadcastSocket, (char *) &(*parseResult), sizeof(*parseResult), 0,
                    (struct sockaddr *) &broadcastAddress, sizeof(broadcastAddress));
+                delete parseResult;
                 break;
             }
         } else if (nBytes < 0) {

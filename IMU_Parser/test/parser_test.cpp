@@ -58,12 +58,12 @@ TEST_CASE("Test single packet")
     uint8_t position = 0;
     addPacketToBuffer(dataBuffer, 1, 1.0, 1.3, 1.5);
     auto parsedResult = parsePacket(dataBuffer, &position, true);
-    REQUIRE(parsedResult.second == true);
-    REQUIRE(((ParsedPacket)parsedResult.first).packetCount == 1);
-    REQUIRE(((ParsedPacket)parsedResult.first).X_GyroRate == 1.0);
-    REQUIRE(((ParsedPacket)parsedResult.first).Y_GyroRate == 1.3f);
-    REQUIRE(((ParsedPacket)parsedResult.first).Z_GyroRate == 1.5f);
+    REQUIRE(((ParsedPacket)*parsedResult).packetCount == 1);
+    REQUIRE(((ParsedPacket)*parsedResult).X_GyroRate == 1.0);
+    REQUIRE(((ParsedPacket)*parsedResult).Y_GyroRate == 1.3f);
+    REQUIRE(((ParsedPacket)*parsedResult).Z_GyroRate == 1.5f);
     dataBuffer.clear();
+    delete parsedResult;
 }
 
 TEST_CASE("Test single malformed header packet")
@@ -72,11 +72,7 @@ TEST_CASE("Test single malformed header packet")
     addPacketToBuffer(dataBuffer, 1, 1.0, 1.3, 1.5);
     dataBuffer[0] = 0x8f;
     auto parsedResult = parsePacket(dataBuffer, &position, true);
-    REQUIRE(parsedResult.second == false);
-    REQUIRE(((ParsedPacket)parsedResult.first).packetCount == 0);
-    REQUIRE(((ParsedPacket)parsedResult.first).X_GyroRate == 0.0);
-    REQUIRE(((ParsedPacket)parsedResult.first).Y_GyroRate == 0.0);
-    REQUIRE(((ParsedPacket)parsedResult.first).Z_GyroRate == 0.0);
+    REQUIRE(parsedResult == nullptr);
     dataBuffer.clear();
 }
 
@@ -86,12 +82,12 @@ TEST_CASE("Test multiple full packets")
     addPacketToBuffer(dataBuffer, 2, 6.78, 98.8, 4.8956);
     addPacketToBuffer(dataBuffer, 1, 1.0, 1.3, 1.5);
     auto parsedResult = parsePacket(dataBuffer, &position, true);
-    REQUIRE(parsedResult.second == true);
-    REQUIRE(((ParsedPacket)parsedResult.first).packetCount == 2);
-    REQUIRE(((ParsedPacket)parsedResult.first).X_GyroRate == 6.78f);
-    REQUIRE(((ParsedPacket)parsedResult.first).Y_GyroRate == 98.8f);
-    REQUIRE(((ParsedPacket)parsedResult.first).Z_GyroRate == 4.8956f);
+    REQUIRE(((ParsedPacket)*parsedResult).packetCount == 2);
+    REQUIRE(((ParsedPacket)*parsedResult).X_GyroRate == 6.78f);
+    REQUIRE(((ParsedPacket)*parsedResult).Y_GyroRate == 98.8f);
+    REQUIRE(((ParsedPacket)*parsedResult).Z_GyroRate == 4.8956f);
     dataBuffer.clear();
+    delete parsedResult;
 }
 
 TEST_CASE("Test multiple full packets and 1 partial packet")
@@ -99,19 +95,19 @@ TEST_CASE("Test multiple full packets and 1 partial packet")
     uint8_t position = 0;
     addPacketToBuffer(dataBuffer, 1, 1.0, 1.3, 1.5);
     auto parsedResult = parsePacket(dataBuffer, &position, true);
-    REQUIRE(parsedResult.second == true);
-    REQUIRE(((ParsedPacket)parsedResult.first).packetCount == 1);
-    REQUIRE(((ParsedPacket)parsedResult.first).X_GyroRate == 1.0);
-    REQUIRE(((ParsedPacket)parsedResult.first).Y_GyroRate == 1.3f);
-    REQUIRE(((ParsedPacket)parsedResult.first).Z_GyroRate == 1.5f);
+    REQUIRE(((ParsedPacket)*parsedResult).packetCount == 1);
+    REQUIRE(((ParsedPacket)*parsedResult).X_GyroRate == 1.0);
+    REQUIRE(((ParsedPacket)*parsedResult).Y_GyroRate == 1.3f);
+    REQUIRE(((ParsedPacket)*parsedResult).Z_GyroRate == 1.5f);
+    delete parsedResult;
 
     addPacketToBuffer(dataBuffer, 3, 7.78, 218.8, 4.8956);
     parsedResult = parsePacket(dataBuffer, &position, true);
-    REQUIRE(parsedResult.second == true);
-    REQUIRE(((ParsedPacket)parsedResult.first).packetCount == 3);
-    REQUIRE(((ParsedPacket)parsedResult.first).X_GyroRate == 7.78f);
-    REQUIRE(((ParsedPacket)parsedResult.first).Y_GyroRate == 218.8f);
-    REQUIRE(((ParsedPacket)parsedResult.first).Z_GyroRate == 4.8956f);
+    REQUIRE(((ParsedPacket)*parsedResult).packetCount == 3);
+    REQUIRE(((ParsedPacket)*parsedResult).X_GyroRate == 7.78f);
+    REQUIRE(((ParsedPacket)*parsedResult).Y_GyroRate == 218.8f);
+    REQUIRE(((ParsedPacket)*parsedResult).Z_GyroRate == 4.8956f);
+    delete parsedResult;
 
     dataBuffer.push_back(0x7F);
     dataBuffer.push_back(0xF0);
@@ -144,7 +140,7 @@ TEST_CASE("Test multiple full packets and 1 partial packet")
     std::cout << dataBuffer.size() << std::endl;
     std::cout << PACKET_SIZE << std::endl;
     parsedResult = parsePacket(dataBuffer, &position, true);
-    REQUIRE(parsedResult.second == false);
+    REQUIRE(parsedResult == nullptr);
     dataBuffer.clear();
 }
 
@@ -157,11 +153,11 @@ TEST_CASE("Test packet starting in the middle")
     dataBuffer.push_back(0xEE);
     addPacketToBuffer(dataBuffer, 1, 1.0, 1.3, 1.5);
     auto parsedResult = parsePacket(dataBuffer, &position, true);
-    REQUIRE(parsedResult.second == true);
-    REQUIRE(((ParsedPacket)parsedResult.first).packetCount == 1);
-    REQUIRE(((ParsedPacket)parsedResult.first).X_GyroRate == 1.0);
-    REQUIRE(((ParsedPacket)parsedResult.first).Y_GyroRate == 1.3f);
-    REQUIRE(((ParsedPacket)parsedResult.first).Z_GyroRate == 1.5f);
+    REQUIRE(((ParsedPacket)*parsedResult).packetCount == 1);
+    REQUIRE(((ParsedPacket)*parsedResult).X_GyroRate == 1.0);
+    REQUIRE(((ParsedPacket)*parsedResult).Y_GyroRate == 1.3f);
+    REQUIRE(((ParsedPacket)*parsedResult).Z_GyroRate == 1.5f);
     dataBuffer.clear();
+    delete parsedResult;
 }
 

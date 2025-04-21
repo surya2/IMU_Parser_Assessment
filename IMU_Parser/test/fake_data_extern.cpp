@@ -28,6 +28,9 @@ extern "C" {
         }
 
         std::uniform_real_distribution<float> floats(-100.0f, 100.0f);
+        float x_gyro_rate = floats(gen);
+        float y_gyro_rate = floats(gen);
+        float z_gyro_rate = floats(gen);
 
         uint32_t x_gyro_bytes;
         memcpy(&x_gyro_bytes, &x_gyro_rate, sizeof(float));

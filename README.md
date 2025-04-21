@@ -34,7 +34,7 @@ Solution for UART reader:
 Description: What modifications, if any, would need to be made to the code from if the Linux host was a little-
 endian processor?\
 Solution:
-- The IEEE-754 network byte order standard means that fields in a packet are written in big endian.
+- The IEEE-754 network byte order standard means that fields in a packet are written in big-endian.
 - Thus, packets that are received and passed into `parsePacket` are in big-endian order which means that a packet count of 21,323 which is 0x000534B would be received as 0x000534B while a little-endian machine would receive it as 0x4B530000 with the least significant byte first
 - This standard would work for big-endian machines, but not for little-endian machines which read the bytes from lef to right.
   - To address this, I wrote some code shown below which checks to see if the machine is little-endian:
@@ -47,7 +47,7 @@ Solution:
     } 
     ```
     If the least significant byte was stored first, the pointer to the number would be dereferenced as the lesst significant byte, indicating a little-endian machine.
-- To address this, I actually used an already written function called `ntohl` from *<arpa/inet.h* Unix library which converts the network byte order field once parsed to the host's endianess
+- To address this, I actually used an already written function called `ntohl` from *<arpa/inet.h>* Unix library which converts the network byte order field once parsed to the host's endianess
   - But if I were to address this without `ntohl`, I would use bit fiddling to convert a big-endian field to a little-endian field. Below is an example of how I would modify the code for the X-axis Gyro Rate for instance and the same is true for the Packet count and other gyro rates:
       ```
       memcpy(&packet.X_GyroRate, &dataBuffer[*position + 8], 4);   // copy X-axis Gyro Rate from packet into struct
@@ -65,9 +65,9 @@ Solution:
 Description: Write a C++ program to execute the parsing function every 80ms and broadcast the packets once parsed. The program must be able to operate in a multi-thread environment with multiple processes running.\
 Solution:
 - My interpretation of this is that every 80ms, packets are both read and broadcasted.
-- Thus I had a while loop in the `main` method of *Imu_Parser/src/imu_parser.cpp* which runs forever and inside of it, calls `processIMU_Frames`. After this, it calles the function `std::this_thread::sleep_for(std::chrono::milliseconds(80))`. This function essentially creates a "dead" thread which sleeps/doesn't do anything for 80ms, allowing other processes to claim the core that the process was originally executing on. This way, other processes can take the time to run before the *imu_parser
- process processes a frame and broadcasts the parsed fields.
-- The broadcast fields from the parsed packets, I used sockets. I took some of the code from my robotics project; in short, it sets a broadcast address to '127.255.255.255' which means all devices/processes with the private IP address starting with *127* will receive the packet. The socket also sends to the broadcast porty *8888* meaning processes on the localhost network can receive the data by listening to port *8888*.
+- Thus I had a while loop in the `main` method of *Imu_Parser/src/imu_parser.cpp* which runs forever and inside of it, calls `processIMU_Frames`. After this, it calls the function `std::this_thread::sleep_for(std::chrono::milliseconds(80))`. This function essentially creates a "dead" thread which sleeps/doesn't do anything for 80ms, allowing other processes to claim the core that the process was originally executing on. This way, other processes can take the time to run before the *imu_parser
+ process processes a frame and broadcasts the parsed fields again.
+- The broadcast fields from the parsed packets, I used sockets. I took some of the code from my robotics project; in short, it sets a broadcast address to '127.255.255.255' which means all devices/processes with the private IP address starting with *127* will receive the packet. The socket also sends to the broadcast port *8888* meaning processes on the localhost network can receive the data by listening to port *8888*.
 
 ### Take 4
 Description: Write a Python program to drive the IMU parser by sending some dummy packets, listening to the broadcasted message, and verifying whether the IMU Parser parsed the sent packet correctly.\
